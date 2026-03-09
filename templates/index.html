@@ -208,7 +208,7 @@ showQueue();
 
 async function nextPatient(){
 
-let response = await fetch("http://127.0.0.1:5000/next_patient");
+let response = await fetch("/next_patient");
 
 let data = await response.json();
 
@@ -241,7 +241,7 @@ showQueue();
 }
 async function resetQueue(){
 
-let response = await fetch("http://127.0.0.1:5000/reset_queue",{
+let response = await fetch("/reset_queue",{
 method:"POST"
 });
 
@@ -254,7 +254,7 @@ document.getElementById("queueList").innerHTML="";
 }
 async function updateBoard(){
 
-let response = await fetch("http://127.0.0.1:5000/display_board");
+let response = await fetch("/display_board");
 
 let data = await response.json();
 
@@ -274,7 +274,7 @@ setInterval(updateClock,1000);
 
 async function showQueue(){
 
-let response = await fetch("http://127.0.0.1:5000/queue");
+let response = await fetch("/queue");
 
 let data = await response.json();
 
