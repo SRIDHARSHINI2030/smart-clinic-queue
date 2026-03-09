@@ -2,7 +2,7 @@
 <html>
 <head>
 <title>Smart Clinic Queue</title>
-
+<link rel="stylesheet" href="/static/style.css">
 <style>
     .clinic-header{
 position:absolute;
@@ -192,7 +192,7 @@ async function addPatient(){
 
 let name = document.getElementById("name").value;
 
-let response = await fetch("http://127.0.0.1:5000/add_patient",{
+let response = await fetch("/add_patient",{
 method:"POST",
 headers:{"Content-Type":"application/json"},
 body:JSON.stringify({name:name})
