@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Smart Clinic Queue</title>
+
+<style>
+    .clinic-header{
+position:absolute;
+top:0;
+width:100%;
+text-align:center;
+background:#1e1e2f;
+color:white;
+padding:15px;
+box-shadow:0 5px 10px rgba(0,0,0,0.2);
+}
+
+.clinic-header h1{
+margin:0;
+font-size:26px;
+}
+
+.clinic-header p{
+margin:5px 0 0 0;
+font-size:14px;
+opacity:0.8;
+}
+
+
+body{
+font-family:Arial;
+margin:0;
+background:linear-gradient(135deg,#5f9cff,#7ee8fa);
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+}
+
+.main-layout{
+display:flex;
+flex-direction:row;
+gap:40px;
+}
+
+.reception{
+background:white;
+padding:25px;
+width:420px;
+border-radius:15px;
+box-shadow:0 10px 25px rgba(0,0,0,0.2);
+text-align:center;
+}
+
+.doctor{
+background:#1e1e2f;
+color:white;
+padding:25px;
+width:420px;
+border-radius:15px;
+box-shadow:0 10px 25px rgba(0,0,0,0.3);
+text-align:center;
+}
+
+input{
+padding:12px;
+width:70%;
+border-radius:8px;
+border:1px solid #ccc;
+font-size:15px;
+}
+
+button{
+padding:10px 18px;
+margin:6px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+font-size:14px;
+}
+
+.enter-btn{
+background:#4CAF50;
+color:white;
+}
+
+button:nth-of-type(2){
+background:#2196F3;
+color:white;
+}
+
+button:nth-of-type(3){
+background:#FF9800;
+color:white;
+}
+
+button:nth-of-type(4){
+background:#f44336;
+color:white;
+}
+
+ul{
+list-style:none;
+padding:0;
+height:150px;
+overflow-y:auto;
+margin-top:10px;
+}
+
+li{
+background:#f2f2f2;
+margin:5px;
+padding:8px;
+border-radius:6px;
+}
+
+#nowServing{
+font-size:26px;
+font-weight:bold;
+margin-top:20px;
+}
+.flash{
+animation:flash 1s;
+}
+
+@keyframes flash{
+0%{background:#28a745;}
+100%{background:transparent;}
+}
+#clock{
+font-size:22px;
+margin-top:20px;
+font-weight:bold;
+color:#dc0016;
+}
+
+
+
+
+</style>
+</head>
+
+<body>
+
+<header class="clinic-header">
+    
+<h1>CityCare Clinic</h1>
+
+<p>Patient Management Dashboard</p>
+
+</header>
+
+<div class="reception">
+
+<h2>Reception Panel</h2>
+
+<input type="text" id="name" placeholder="Enter Patient Name">
+
+<br><br>
+
+<button onclick="addPatient()" class="enter-btn">Register Patient</button>
+
+<button onclick="nextPatient()">Call Next Patient</button>
+
+<button onclick="showQueue()">View Waiting List</button>
+
+<button onclick="resetQueue()">Start New Session</button>
+
+<h3 id="result"></h3>
+
+<ul id="queueList"></ul>
+
+</div>
+
+
+<div class="doctor">
+
+<h2>Doctor Display</h2>
+
+<div id="nowServing">Now Serving: -</div>
+
+<div id="waitingCount"></div>
+<div id="waitTime"></div>
+<div id="clock"></div>
+
+</div>
+
+<script>
+
+async function addPatient(){
+
+
+let name = document.getElementById("name").value;
+
+let response = await fetch("http://127.0.0.1:5000/add_patient",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({name:name})
+});
+
+let data = await response.json();
+
+document.getElementById("result").innerText=data.message;
+
+showQueue();
+
+}
+
+async function nextPatient(){
+
+let response = await fetch("http://127.0.0.1:5000/next_patient");
+
+let data = await response.json();
+
+if(data.next_patient){
+
+
+let message = "Token " + data.next_patient.token + " - " + data.next_patient.name;
+
+document.getElementById("result").innerText = "Calling: " + message;
+
+updateBoard();
+
+
+
+/* FLASH DOCTOR PANEL */
+document.querySelector(".doctor").classList.add("flash");
+
+setTimeout(function(){
+document.querySelector(".doctor").classList.remove("flash");
+},1000);
+
+}else{
+
+document.getElementById("result").innerText = data.message;
+
+}
+
+showQueue();
+
+}
+async function resetQueue(){
+
+let response = await fetch("http://127.0.0.1:5000/reset_queue",{
+method:"POST"
+});
+
+let data = await response.json();
+
+document.getElementById("result").innerText=data.message;
+
+document.getElementById("queueList").innerHTML="";
+
+}
+async function updateBoard(){
+
+let response = await fetch("http://127.0.0.1:5000/display_board");
+
+let data = await response.json();
+
+document.getElementById("nowServing").innerText =
+"Now Serving: " + data.now_serving;
+
+document.getElementById("waitingCount").innerText =
+"Patients Waiting: " + data.patients_waiting;
+
+document.getElementById("waitTime").innerText =
+"Estimated Wait Time: " + data.estimated_wait + " minutes";
+
+
+}
+setInterval(updateBoard,3000);
+setInterval(updateClock,1000);
+
+async function showQueue(){
+
+let response = await fetch("http://127.0.0.1:5000/queue");
+
+let data = await response.json();
+
+let list=document.getElementById("queueList");
+
+list.innerHTML="";
+
+data.queue.forEach(function(patient){
+let li=document.createElement("li");
+li.innerText = "Token " + patient.token + " - " + patient.name;
+list.appendChild(li);
+});
+
+}
+function updateClock(){
+
+let now = new Date();
+
+let time = now.toLocaleTimeString();
+
+document.getElementById("clock").innerText = "Current Time: " + time;
+
+}
+
+
+
+
+
+</script>
+
+
+</body>
+</html>
